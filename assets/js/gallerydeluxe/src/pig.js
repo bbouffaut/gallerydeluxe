@@ -946,6 +946,7 @@ ProgressiveImage.prototype.getElement = function () {
 			const activeClass = this.pig.settings.classPrefix + '-like-active';
 			likeButton.type = 'button';
 			likeButton.className = this.pig.settings.classPrefix + '-like-button';
+			likeButton.setAttribute('data-gd-filename', this.filename);
 			likeButton.setAttribute('aria-pressed', isLiked ? 'true' : 'false');
 			likeButton.setAttribute('aria-label', isLiked ? 'Unlike photo' : 'Like photo');
 			likeButton.innerHTML =

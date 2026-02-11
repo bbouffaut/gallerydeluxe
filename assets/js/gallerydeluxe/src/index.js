@@ -22,6 +22,11 @@ let GalleryDeluxe = {
 		const likeApiUrl = params.like_api_url || '';
 		const likeStorageKey = `gd-liked-${galleryId}`;
 		const likedSet = new Set();
+		const likeButtonClass = 'gd-like-button';
+		const likeActiveClass = 'gd-like-active';
+		const heartIcon =
+			'<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">' +
+			'<path d="M12 21s-6.7-4.2-9.3-7.7C.5 10.6 1.2 7.1 3.8 5.4c2.1-1.4 4.9-1 6.6 1l1.6 1.9 1.6-1.9c1.7-2 4.5-2.4 6.6-1 2.6 1.7 3.3 5.2 1.1 7.9C18.7 16.8 12 21 12 21z"/></svg>';
 		const loadLikes = () => {
 			try {
 				const raw = window.localStorage.getItem(likeStorageKey);
@@ -57,6 +62,25 @@ let GalleryDeluxe = {
 				debug('sendLike failed', e);
 			}
 		};
+		const setLikeButtonState = (button, liked) => {
+			if (!button) {
+				return;
+			}
+			button.classList.toggle(likeActiveClass, liked);
+			button.setAttribute('aria-pressed', liked ? 'true' : 'false');
+			button.setAttribute('aria-label', liked ? 'Unlike photo' : 'Like photo');
+		};
+		const updateLikeButtons = (filename, liked) => {
+			let selector = `[data-gd-filename="${filename}"]`;
+			if (window.CSS && window.CSS.escape) {
+				selector = `[data-gd-filename="${window.CSS.escape(filename)}"]`;
+			}
+			document.querySelectorAll(selector).forEach((button) => {
+				if (button.classList.contains(likeButtonClass)) {
+					setLikeButtonState(button, liked);
+				}
+			});
+		};
 		loadLikes();
 
 		// The image opened in the lightbox.
@@ -75,6 +99,9 @@ let GalleryDeluxe = {
 		let imageWrapper = document.createElement('div');
 		imageWrapper.classList.add('gd-modal-content-wrapper');
 		modal.insertBefore(imageWrapper, modal.firstChild);
+		let modalImageFrame = document.createElement('div');
+		modalImageFrame.classList.add('gd-modal-image-frame');
+		imageWrapper.appendChild(modalImageFrame);
 
 		const closeModal = (e) => {
 			if (e) {
@@ -157,6 +184,7 @@ let GalleryDeluxe = {
 
 			if (activeImage) {
 				let modal = document.getElementById('gd-modal');
+				const modalLikeButtonId = 'gd-modal-like';
 
 				if (params.enable_exif) {
 					if (exifTimeoutId) {
@@ -212,14 +240,16 @@ let GalleryDeluxe = {
 
 				thumbnail.onload = function () {
 					if (thumbnail) {
-						imageWrapper.appendChild(thumbnail);
+						modalImageFrame.appendChild(thumbnail);
 						removeOldEls();
 					}
 				};
 
+				let modalLikeButton = modal.querySelector(`#${modalLikeButtonId}`);
+
 				fullImage.onload = function () {
 					if (fullImage) {
-						imageWrapper.appendChild(fullImage);
+						modalImageFrame.appendChild(fullImage);
 						fullImage.classList.add(classLoaded);
 						if (thumbnail) {
 							thumbnail.classList.add(classLoaded);
@@ -227,6 +257,33 @@ let GalleryDeluxe = {
 						removeOldEls();
 					}
 				};
+
+				if (!modalLikeButton) {
+					modalLikeButton = document.createElement('button');
+					modalLikeButton.id = modalLikeButtonId;
+					modalLikeButton.type = 'button';
+					modalLikeButton.className = likeButtonClass;
+					modalLikeButton.innerHTML = heartIcon;
+					modalLikeButton.addEventListener('click', function (event) {
+						event.preventDefault();
+						event.stopPropagation();
+						if (!activeImage) {
+							return;
+						}
+						const nowLiked = !likedSet.has(activeImage.name);
+						if (nowLiked) {
+							likedSet.add(activeImage.name);
+						} else {
+							likedSet.delete(activeImage.name);
+						}
+						persistLikes();
+						updateLikeButtons(activeImage.name, nowLiked);
+						sendLike(activeImage.name, nowLiked);
+					});
+					modalImageFrame.appendChild(modalLikeButton);
+				}
+				modalLikeButton.setAttribute('data-gd-filename', activeImage.name);
+				setLikeButtonState(modalLikeButton, likedSet.has(activeImage.name));
 
 				modal.style.display = 'block';
 			}
@@ -278,6 +335,7 @@ let GalleryDeluxe = {
 					likedSet.delete(filename);
 				}
 				persistLikes();
+				updateLikeButtons(filename, liked);
 				sendLike(filename, liked);
 			},
 			containerId: galleryId,
