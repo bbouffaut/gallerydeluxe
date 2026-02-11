@@ -36,6 +36,12 @@ The recommended way to add this to your site is to include it as a Hugo Module. 
         # Optional API endpoint to receive like events.
         like_api_url = ""
 
+        # Optional Mixpanel key. When set, Mixpanel is initialized and events are sent.
+        mixpanel_key = ""
+
+        # Optional Mixpanel API host.
+        mixpanel_api_host = "https://api-eu.mixpanel.com"
+
           # Optional watermark file for the large images.
         [params.gallerydeluxe.watermark]
             image = "images/gopher-hero8.png" # relative to /assets

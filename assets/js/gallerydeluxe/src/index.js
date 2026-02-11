@@ -4,7 +4,7 @@ import * as params from '@params';
 import { Pig } from './pig';
 import { newSwiper } from './helpers';
 
-var debug = 0 ? console.log.bind(console, '[gallery-deluxe]') : function () {};
+var debug = console.log.bind(console, '[gallery-deluxe]');
 
 let GalleryDeluxe = {
 	init: async function () {
@@ -20,6 +20,7 @@ let GalleryDeluxe = {
 			throw new Error(`No ${dataAttributeName} attribute found.`);
 		}
 		const likeApiUrl = params.like_api_url || '';
+		const mixpanelEnabled = Boolean(params.mixpanel_key);
 		const likeStorageKey = `gd-liked-${galleryId}`;
 		const likedSet = new Set();
 		const likeButtonClass = 'gd-like-button';
@@ -69,6 +70,23 @@ let GalleryDeluxe = {
 			button.classList.toggle(likeActiveClass, liked);
 			button.setAttribute('aria-pressed', liked ? 'true' : 'false');
 			button.setAttribute('aria-label', liked ? 'Unlike photo' : 'Like photo');
+		};
+		const trackEvent = (name, props) => {
+			debug('trackEvent', name, props);
+			if (!mixpanelEnabled || !window.mixpanel || typeof window.mixpanel.track !== 'function') {
+				debug('trackEvent skipped', {
+					mixpanelEnabled: mixpanelEnabled,
+					hasMixpanel: Boolean(window.mixpanel),
+					hasTrack: Boolean(window.mixpanel && window.mixpanel.track),
+				});
+				return;
+			}
+			try {
+				window.mixpanel.track(name, props || {});
+				debug('trackEvent sent', name);
+			} catch (e) {
+				debug('trackEvent failed', e);
+			}
 		};
 		const updateLikeButtons = (filename, liked) => {
 			let selector = `[data-gd-filename="${filename}"]`;
@@ -127,10 +145,12 @@ let GalleryDeluxe = {
 				case 'left':
 					activeImage = activeImage.next;
 					openActiveImage();
+					trackEvent('Photo Swiped', { direction: 'left' });
 					break;
 				case 'right':
 					activeImage = activeImage.prev;
 					openActiveImage();
+					trackEvent('Photo Swiped', { direction: 'right' });
 					break;
 				default:
 					closeModal();
@@ -183,6 +203,11 @@ let GalleryDeluxe = {
 			};
 
 			if (activeImage) {
+				trackEvent('Photo Displayed', {
+					filename: activeImage.name,
+					width: activeImage.width,
+					height: activeImage.height,
+				});
 				let modal = document.getElementById('gd-modal');
 				const modalLikeButtonId = 'gd-modal-like';
 
@@ -279,6 +304,11 @@ let GalleryDeluxe = {
 						persistLikes();
 						updateLikeButtons(activeImage.name, nowLiked);
 						sendLike(activeImage.name, nowLiked);
+						trackEvent('Photo Liked Toggled', {
+							filename: activeImage.name,
+							liked: nowLiked,
+							source: 'lightbox',
+						});
 					});
 					modalImageFrame.appendChild(modalLikeButton);
 				}
@@ -337,6 +367,11 @@ let GalleryDeluxe = {
 				persistLikes();
 				updateLikeButtons(filename, liked);
 				sendLike(filename, liked);
+				trackEvent('Photo Liked Toggled', {
+					filename: filename,
+					liked: liked,
+					source: 'grid',
+				});
 			},
 			containerId: galleryId,
 			classPrefix: 'gd',
