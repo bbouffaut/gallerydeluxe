@@ -19,6 +19,45 @@ let GalleryDeluxe = {
 		if (!dataUrl) {
 			throw new Error(`No ${dataAttributeName} attribute found.`);
 		}
+		const likeApiUrl = params.like_api_url || '';
+		const likeStorageKey = `gd-liked-${galleryId}`;
+		const likedSet = new Set();
+		const loadLikes = () => {
+			try {
+				const raw = window.localStorage.getItem(likeStorageKey);
+				if (!raw) {
+					return;
+				}
+				const parsed = JSON.parse(raw);
+				if (Array.isArray(parsed)) {
+					parsed.forEach((name) => likedSet.add(name));
+				}
+			} catch (e) {
+				debug('loadLikes failed', e);
+			}
+		};
+		const persistLikes = () => {
+			try {
+				window.localStorage.setItem(likeStorageKey, JSON.stringify(Array.from(likedSet)));
+			} catch (e) {
+				debug('persistLikes failed', e);
+			}
+		};
+		const sendLike = (filename, liked) => {
+			if (!likeApiUrl) {
+				return;
+			}
+			try {
+				fetch(likeApiUrl, {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ filename: filename, liked: liked }),
+				});
+			} catch (e) {
+				debug('sendLike failed', e);
+			}
+		};
+		loadLikes();
 
 		// The image opened in the lightbox.
 		let activeImage;
@@ -227,6 +266,19 @@ let GalleryDeluxe = {
 				if (activeImage) {
 					openActiveImage();
 				}
+			},
+			likeEnabled: true,
+			isLiked: function (filename) {
+				return likedSet.has(filename);
+			},
+			onToggleLike: function (filename, liked) {
+				if (liked) {
+					likedSet.add(filename);
+				} else {
+					likedSet.delete(filename);
+				}
+				persistLikes();
+				sendLike(filename, liked);
 			},
 			containerId: galleryId,
 			classPrefix: 'gd',

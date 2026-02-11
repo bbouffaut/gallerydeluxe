@@ -18,3 +18,6 @@ public/
 .hugo_build.lock
 resources/
 jsconfig.json
+
+#Ignore cursor AI rules
+.cursor/rules/codacy.mdc

@@ -14,6 +14,7 @@ disableKinds = ["taxonomy", "term", "section"]
         shuffle     = false
         reverse     = true
         enable_exif = false
+        like_api_url = ""
 
 [imaging]
     resampleFilter = "CatmullRom"

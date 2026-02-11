@@ -33,6 +33,9 @@ The recommended way to add this to your site is to include it as a Hugo Module. 
          # See https://gohugo.io/content-management/image-processing/#exif-data for how to filter tags.
         enable_exif = false
 
+        # Optional API endpoint to receive like events.
+        like_api_url = ""
+
           # Optional watermark file for the large images.
         [params.gallerydeluxe.watermark]
             image = "images/gopher-hero8.png" # relative to /assets

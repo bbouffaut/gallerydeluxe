@@ -310,6 +310,26 @@ export function Pig(imageData, options) {
 		onClickHandler: null,
 
 		/**
+		 * Enable a like button overlay on each image.
+		 */
+		likeEnabled: false,
+
+		/**
+		 * Check if an image is liked.
+		 *
+		 * @param {string} filename - The filename property of the image.
+		 */
+		isLiked: null,
+
+		/**
+		 * Callback when a like button is toggled.
+		 *
+		 * @param {string} filename - The filename property of the image.
+		 * @param {boolean} liked - Whether the image is liked.
+		 */
+		onToggleLike: null,
+
+		/**
 		 * Get the minimum required aspect ratio for a valid row of images. The
 		 * perfect rows are maintained by building up a row of images by adding
 		 * together their aspect ratios (the aspect ratio when they are placed
@@ -918,6 +938,38 @@ ProgressiveImage.prototype.getElement = function () {
 					this.pig.settings.onClickHandler(this.filename);
 				}.bind(this)
 			);
+		}
+
+		if (this.pig.settings.likeEnabled && !this.likeButton) {
+			const isLiked = this.pig.settings.isLiked ? this.pig.settings.isLiked(this.filename) : false;
+			const likeButton = document.createElement('button');
+			const activeClass = this.pig.settings.classPrefix + '-like-active';
+			likeButton.type = 'button';
+			likeButton.className = this.pig.settings.classPrefix + '-like-button';
+			likeButton.setAttribute('aria-pressed', isLiked ? 'true' : 'false');
+			likeButton.setAttribute('aria-label', isLiked ? 'Unlike photo' : 'Like photo');
+			likeButton.innerHTML =
+				'<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">' +
+				'<path d="M12 21s-6.7-4.2-9.3-7.7C.5 10.6 1.2 7.1 3.8 5.4c2.1-1.4 4.9-1 6.6 1l1.6 1.9 1.6-1.9c1.7-2 4.5-2.4 6.6-1 2.6 1.7 3.3 5.2 1.1 7.9C18.7 16.8 12 21 12 21z"/></svg>';
+			if (isLiked) {
+				likeButton.classList.add(activeClass);
+			}
+			likeButton.addEventListener(
+				'click',
+				function (event) {
+					event.preventDefault();
+					event.stopPropagation();
+					const nowLiked = !likeButton.classList.contains(activeClass);
+					likeButton.classList.toggle(activeClass, nowLiked);
+					likeButton.setAttribute('aria-pressed', nowLiked ? 'true' : 'false');
+					likeButton.setAttribute('aria-label', nowLiked ? 'Unlike photo' : 'Like photo');
+					if (this.pig.settings.onToggleLike) {
+						this.pig.settings.onToggleLike(this.filename, nowLiked);
+					}
+				}.bind(this)
+			);
+			this.element.appendChild(likeButton);
+			this.likeButton = likeButton;
 		}
 		this._updateStyles();
 	}
