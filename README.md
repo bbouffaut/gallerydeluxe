@@ -33,14 +33,8 @@ The recommended way to add this to your site is to include it as a Hugo Module. 
          # See https://gohugo.io/content-management/image-processing/#exif-data for how to filter tags.
         enable_exif = false
 
-        # Optional API endpoint to receive like events.
-        like_api_url = ""
-
-        # Optional Mixpanel key. When set, Mixpanel is initialized and events are sent.
-        mixpanel_key = ""
-
-        # Optional Mixpanel API host.
-        mixpanel_api_host = "https://api-eu.mixpanel.com"
+        # Optional API host for analytics endpoints.
+        event_api_host = ""
 
           # Optional watermark file for the large images.
         [params.gallerydeluxe.watermark]

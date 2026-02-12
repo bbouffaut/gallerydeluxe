@@ -19,8 +19,19 @@ let GalleryDeluxe = {
 		if (!dataUrl) {
 			throw new Error(`No ${dataAttributeName} attribute found.`);
 		}
-		const likeApiUrl = params.like_api_url || '';
-		const mixpanelEnabled = Boolean(params.mixpanel_key);
+		const eventApiHost = params.event_api_url || '';
+		const eventApiEventsPath = 'events';
+		const eventApiLikesPath = 'likes';
+		const buildApiUrl = (host, path) => {
+			if (!host || !path) {
+				return '';
+			}
+			const normalizedHost = host.replace(/\/+$/, '');
+			const normalizedPath = path.replace(/^\/+/, '');
+			return `${normalizedHost}/${normalizedPath}`;
+		};
+		const eventApiEventsUrl = buildApiUrl(eventApiHost, eventApiEventsPath);
+		const eventApiLikesUrl = buildApiUrl(eventApiHost, eventApiLikesPath);
 		const likeStorageKey = `gd-liked-${galleryId}`;
 		const likedSet = new Set();
 		const likeButtonClass = 'gd-like-button';
@@ -50,11 +61,11 @@ let GalleryDeluxe = {
 			}
 		};
 		const sendLike = (filename, liked) => {
-			if (!likeApiUrl) {
+			if (!eventApiLikesUrl) {
 				return;
 			}
 			try {
-				fetch(likeApiUrl, {
+				fetch(eventApiLikesUrl, {
 					method: 'POST',
 					headers: { 'Content-Type': 'application/json' },
 					body: JSON.stringify({ filename: filename, liked: liked }),
@@ -73,16 +84,19 @@ let GalleryDeluxe = {
 		};
 		const trackEvent = (name, props) => {
 			debug('trackEvent', name, props);
-			if (!mixpanelEnabled || !window.mixpanel || typeof window.mixpanel.track !== 'function') {
-				debug('trackEvent skipped', {
-					mixpanelEnabled: mixpanelEnabled,
-					hasMixpanel: Boolean(window.mixpanel),
-					hasTrack: Boolean(window.mixpanel && window.mixpanel.track),
-				});
+			if (!eventApiEventsUrl) {
+				debug('trackEvent skipped', { reason: 'no event_api_events_url configured' });
 				return;
 			}
 			try {
-				window.mixpanel.track(name, props || {});
+				fetch(eventApiEventsUrl, {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({
+						event: name,
+						properties: props || {},
+					}),
+				});
 				debug('trackEvent sent', name);
 			} catch (e) {
 				debug('trackEvent failed', e);
