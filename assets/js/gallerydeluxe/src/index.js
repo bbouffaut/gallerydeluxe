@@ -33,6 +33,7 @@ let GalleryDeluxe = {
 		const eventApiEventsUrl = buildApiUrl(eventApiHost, eventApiEventsPath);
 		const eventApiLikesUrl = buildApiUrl(eventApiHost, eventApiLikesPath);
 		const likeStorageKey = `gd-liked-${galleryId}`;
+		const galleryLoadedStorageKey = `gd-loaded-${galleryId}`;
 		const likedSet = new Set();
 		const likeButtonClass = 'gd-like-button';
 		const likeActiveClass = 'gd-like-active';
@@ -411,6 +412,8 @@ let GalleryDeluxe = {
 		};
 
 		new Pig(imageData, options).enable();
+
+		trackEvent('Gallery Loaded', { count: images.length, likedCount: likedSet.size });
 	},
 };
 
