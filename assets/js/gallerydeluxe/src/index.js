@@ -4,7 +4,7 @@ import * as params from '@params';
 import { Pig } from './pig';
 import { newSwiper } from './helpers';
 
-var debug = console.log.bind(console, '[gallery-deluxe]');
+var debug = params.debug ? console.log.bind(console, '[gallery-deluxe]') : function () {};
 
 let GalleryDeluxe = {
 	init: async function () {

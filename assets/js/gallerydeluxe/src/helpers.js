@@ -1,7 +1,9 @@
 'use strict';
+import * as params from '@params';
+
 
 export function newSwiper(el, callback) {
-	const debug = 0 ? console.log.bind(console, '[swiper]') : function () {};
+	params.debug ? console.log.bind(console, '[swiper]') : function () {};
 
 	const simulateTwoFingers = false;
 
