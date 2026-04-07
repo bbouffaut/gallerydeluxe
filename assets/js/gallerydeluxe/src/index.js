@@ -40,6 +40,12 @@ let GalleryDeluxe = {
 		const heartIcon =
 			'<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">' +
 			'<path d="M12 21s-6.7-4.2-9.3-7.7C.5 10.6 1.2 7.1 3.8 5.4c2.1-1.4 4.9-1 6.6 1l1.6 1.9 1.6-1.9c1.7-2 4.5-2.4 6.6-1 2.6 1.7 3.3 5.2 1.1 7.9C18.7 16.8 12 21 12 21z"/></svg>';
+		const arrowLeftIcon =
+			'<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">' +
+			'<path d="M14.5 5.5 8 12l6.5 6.5"/></svg>';
+		const arrowRightIcon =
+			'<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">' +
+			'<path d="M9.5 5.5 16 12l-6.5 6.5"/></svg>';
 		const loadLikes = () => {
 			try {
 				const raw = window.localStorage.getItem(likeStorageKey);
@@ -135,6 +141,23 @@ let GalleryDeluxe = {
 		let modalImageFrame = document.createElement('div');
 		modalImageFrame.classList.add('gd-modal-image-frame');
 		imageWrapper.appendChild(modalImageFrame);
+		const createNavButton = (id, className, ariaLabel, icon, direction) => {
+			const button = document.createElement('button');
+			button.id = id;
+			button.type = 'button';
+			button.className = `gd-modal-nav ${className}`;
+			button.setAttribute('aria-label', ariaLabel);
+			button.innerHTML = icon;
+			button.addEventListener('click', function (event) {
+				event.preventDefault();
+				event.stopPropagation();
+				swipe(direction);
+			});
+			imageWrapper.appendChild(button);
+			return button;
+		};
+		createNavButton('gd-modal-prev', 'gd-modal-prev', 'Previous photo', arrowLeftIcon, 'right');
+		createNavButton('gd-modal-next', 'gd-modal-next', 'Next photo', arrowRightIcon, 'left');
 
 		const closeModal = (e) => {
 			if (e) {
