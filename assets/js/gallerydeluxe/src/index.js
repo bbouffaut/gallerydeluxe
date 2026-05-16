@@ -46,6 +46,9 @@ let GalleryDeluxe = {
 		const arrowRightIcon =
 			'<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">' +
 			'<path d="M9.5 5.5 16 12l-6.5 6.5"/></svg>';
+		const returnIcon =
+			'<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">' +
+			'<path d="M19 7v5a2 2 0 0 1-2 2H8.8l2.6 2.6L10 18l-5-5 5-5 1.4 1.4L8.8 12H17a1 1 0 0 0 1-1V7z"/></svg>';
 		const loadLikes = () => {
 			try {
 				const raw = window.localStorage.getItem(likeStorageKey);
@@ -122,6 +125,50 @@ let GalleryDeluxe = {
 		};
 		loadLikes();
 
+		const createSearchBar = () => {
+			const searchForm = document.createElement('form');
+			searchForm.className = 'gd-search';
+			searchForm.setAttribute('role', 'search');
+			searchForm.setAttribute('aria-label', 'Cherche photos avec un lac');
+			searchForm.noValidate = true;
+
+			const searchInput = document.createElement('input');
+			searchInput.className = 'gd-search-input';
+			searchInput.type = 'search';
+			searchInput.placeholder = 'Cherche photos avec un lac';
+			searchInput.setAttribute('aria-label', 'Cherche photos avec un lac');
+			searchInput.autocomplete = 'off';
+			searchInput.spellcheck = false;
+
+			const searchSubmit = document.createElement('button');
+			searchSubmit.className = 'gd-search-submit';
+			searchSubmit.type = 'submit';
+			searchSubmit.setAttribute('aria-label', 'Lancer la recherche');
+			searchSubmit.innerHTML = returnIcon;
+
+			searchForm.appendChild(searchInput);
+			searchForm.appendChild(searchSubmit);
+
+			// Let the host app fetch and render results for this query.
+			searchForm.addEventListener('submit', function (event) {
+				event.preventDefault();
+				searchForm.dispatchEvent(
+					new CustomEvent('gallerydeluxe-search', {
+						bubbles: true,
+						detail: {
+							query: searchInput.value.trim(),
+							galleryId: galleryId,
+						},
+					})
+				);
+			});
+
+			document.body.appendChild(searchForm);
+			return searchForm;
+		};
+
+		createSearchBar();
+
 		// The image opened in the lightbox.
 		let activeImage;
 		let exifTimeoutId;
@@ -171,6 +218,7 @@ let GalleryDeluxe = {
 			modal.style.display = 'none';
 			// Enable scrolling.
 			document.body.style.overflow = 'auto';
+			activeImage = undefined;
 		};
 
 		modalClose.addEventListener('click', function () {
@@ -179,6 +227,9 @@ let GalleryDeluxe = {
 
 		const swipe = function (direction) {
 			debug('swipe', direction);
+			if ((direction === 'left' || direction === 'right') && !activeImage) {
+				return;
+			}
 			switch (direction) {
 				case 'left':
 					activeImage = activeImage.next;
